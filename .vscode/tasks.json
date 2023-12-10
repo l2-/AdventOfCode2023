@@ -1,0 +1,58 @@
+{
+    "tasks": [
+      {
+        "type": "cppbuild",
+        "label": "clang++.exe build active file",
+        "command": "clang++.exe",
+        "args": [
+          "-g",
+          "-fdiagnostics-color=always",
+          "${file}",
+          "-I",
+          "${workspaceFolder}/cpp/headers/",
+          "-o",
+          "${fileDirname}/${fileBasenameNoExtension}.exe",
+          "-std=c++23",
+          "-Wall"
+        ],
+        "options": {
+            "cwd": "${fileDirname}"
+        },
+        "problemMatcher": [
+            "$gcc"
+        ],
+        "group": {
+            "kind": "build",
+            "isDefault": true
+        },
+      },
+      {
+        "type": "shell",
+        "label": "clang++ build & run active file",
+        "command": "clang++.exe",
+        "args": [
+          "-g",
+          "-fdiagnostics-color=always",
+          "${file}",
+          "-I",
+          "${workspaceFolder}/cpp/headers/",
+          "-o",
+          "${fileDirname}/${fileBasenameNoExtension}.exe",
+          "-std=c++23",
+          "-Wall"
+        ],
+        "options": {
+            "cwd": "${fileDirname}"
+        },
+        "problemMatcher": [
+            "$gcc"
+        ],
+        "group": {
+            "kind": "build",
+            "isDefault": true
+        },
+      }
+    ],
+    "version":"2.0.0"
+  }
+  
