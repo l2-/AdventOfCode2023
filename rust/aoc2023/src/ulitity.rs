@@ -104,6 +104,14 @@ impl Bounds3d for Int3 {
             && self.2.in_bounds(_min.2, _max.2);
     }
 }
+pub trait Distance2d {
+    fn manhattan_distance(&self, other: Int2) -> i64;
+}
+impl Distance2d for Int2 {
+    fn manhattan_distance(&self, (x2, y2): Int2) -> i64 {
+        manhattan_distance(self.0, self.1, x2, y2)
+    }
+}
 pub trait Maths3i64 {
     fn add(&self, other: Int3) -> Int3;
     fn sub(&self, other: Int3) -> Int3;
