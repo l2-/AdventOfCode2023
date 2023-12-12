@@ -30,5 +30,5 @@ mod ulitity;
 use days::*;
 
 fn main() {
-    day11::day();
+    day12::day();
 }
