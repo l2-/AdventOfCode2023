@@ -13,6 +13,26 @@ pub fn read_lines(file_path: &str) -> Vec<String> {
     };
 }
 
+pub fn read_line(file_path: &str) -> String {
+    let res = fs::read_to_string(file_path);
+    return match res {
+        Ok(_str) => _str.to_string(),
+        Err(_) => panic!("No file found for {}", file_path),
+    };
+}
+
+pub fn transpose_strings(s: &Vec<String>) -> Vec<String> {
+    let mut lines = vec![] as Vec<String>;
+    for y in 0..s.len() {
+        for x in 0..s[y].len() {
+            let __s = s[y].chars().nth(x).unwrap().to_string();
+            let _s = if x < lines.len() { lines[x].to_string() + &__s } else { __s };
+            if x < lines.len() { lines[x] = _s; } else { lines.push(_s) };
+        }
+    }
+    return lines;
+}
+
 pub fn string_split(_str: &str, pattern: &str) -> Vec<String> {
     return _str
         .split(pattern)
