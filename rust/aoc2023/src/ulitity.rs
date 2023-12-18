@@ -1,5 +1,5 @@
 use regex::Regex;
-use std::{os::windows, *, process::Output};
+use std::{collections::VecDeque, os::windows, process::Output, *};
 pub type Int2 = (i64, i64);
 pub type Int3 = (i64, i64, i64);
 pub type AABB2 = (Int2, Int2);
@@ -26,8 +26,16 @@ pub fn transpose_strings(s: &Vec<String>) -> Vec<String> {
     for y in 0..s.len() {
         for x in 0..s[y].len() {
             let __s = s[y].chars().nth(x).unwrap().to_string();
-            let _s = if x < lines.len() { lines[x].to_string() + &__s } else { __s };
-            if x < lines.len() { lines[x] = _s; } else { lines.push(_s) };
+            let _s = if x < lines.len() {
+                lines[x].to_string() + &__s
+            } else {
+                __s
+            };
+            if x < lines.len() {
+                lines[x] = _s;
+            } else {
+                lines.push(_s)
+            };
         }
     }
     return lines;
@@ -98,6 +106,32 @@ pub fn distance(a: i64, b: i64) -> i64 {
     return i64::abs(a - b) + 1;
 }
 
+pub trait AABB3t {
+    fn grow(&self, point: Int3) -> Self;
+}
+
+impl AABB3t for AABB3 {
+    fn grow(&self, point: Int3) -> Self {
+        (
+            self.0.element_wise_min(point),
+            self.1.element_wise_max(point),
+        )
+    }
+}
+
+pub trait AABB2t {
+    fn grow(&self, point: Int2) -> Self;
+}
+
+impl AABB2t for AABB2 {
+    fn grow(&self, point: Int2) -> Self {
+        (
+            self.0.element_wise_min(point),
+            self.1.element_wise_max(point),
+        )
+    }
+}
+
 pub trait Bounds1d {
     fn in_bounds(&self, _min: i64, _max: i64) -> bool;
 }
@@ -135,6 +169,7 @@ impl Distance2d for Int2 {
 pub trait Maths3i64 {
     fn add(&self, other: Int3) -> Int3;
     fn sub(&self, other: Int3) -> Int3;
+    fn mul(&self, scalar: i64) -> Int3;
     fn element_wise_min(&self, other: Int3) -> Int3;
     fn element_wise_max(&self, other: Int3) -> Int3;
 }
@@ -150,6 +185,38 @@ impl Maths3i64 for Int3 {
     }
     fn element_wise_max(&self, (x, y, z): Int3) -> Int3 {
         return (self.0.max(x), self.1.max(y), self.2.max(z));
+    }
+    fn mul(&self, scalar: i64) -> Int3 {
+        (self.0 * scalar, self.1 * scalar, self.2 * scalar)
+    }
+}
+pub trait Maths2i64 {
+    fn add(&self, other: Int2) -> Int2;
+    fn sub(&self, other: Int2) -> Int2;
+    fn mul(&self, scalar: i64) -> Int2;
+    fn element_wise_min(&self, other: Int2) -> Int2;
+    fn element_wise_max(&self, other: Int2) -> Int2;
+    fn determinant(&self, other: Int2) -> i64;
+}
+impl Maths2i64 for Int2 {
+    fn add(&self, (x, y): Int2) -> Int2 {
+        (self.0 + x, self.1 + y)
+    }
+    fn sub(&self, (x, y): Int2) -> Int2 {
+        (self.0 - x, self.1 - y)
+    }
+    fn element_wise_min(&self, (x, y): Int2) -> Int2 {
+        return (self.0.min(x), self.1.min(y));
+    }
+    fn element_wise_max(&self, (x, y): Int2) -> Int2 {
+        return (self.0.max(x), self.1.max(y));
+    }
+
+    fn mul(&self, scalar: i64) -> Int2 {
+        (self.0 * scalar, self.1 * scalar)
+    }
+    fn determinant(&self, other: Int2) -> i64 {
+        self.0 * other.1 - self.1 * other.0
     }
 }
 
@@ -200,11 +267,7 @@ fn _gcd(mut n: u64, mut m: u64) -> u64 {
 }
 
 pub fn gcd(nums: &Vec<u64>) -> u64 {
-    return nums
-        .iter()
-        .copied()
-        .reduce(|acc, e| _gcd(acc, e))
-        .unwrap();
+    return nums.iter().copied().reduce(|acc, e| _gcd(acc, e)).unwrap();
 }
 
 pub fn lcm(nums: &Vec<u64>) -> u64 {
@@ -218,4 +281,101 @@ pub fn lcm(nums: &Vec<u64>) -> u64 {
 
 pub fn get_day(filename: &String) -> i32 {
     string_to_ints(&filename)[0] as i32
+}
+
+pub fn fill2d<T: Clone + PartialEq>(
+    grid: &mut Vec<T>,
+    width: usize,
+    height: usize,
+    start_x: usize,
+    start_y: usize,
+    fill_value: T,
+    filled_value: T,
+) {
+    let mut q = VecDeque::new() as VecDeque<(usize, usize)>;
+    let bounds = ((0i64, 0i64), (width as i64 - 1, height as i64 - 1));
+    q.push_back((start_x, start_y));
+    let directions = [(-1i64, 0i64), (0, -1), (1, 0), (0, 1)];
+    while let Some((x, y)) = q.pop_back() {
+        grid[x + y * width] = fill_value.clone();
+        directions.iter().for_each(|&(dx, dy)| {
+            let next = (x as i64 + dx, y as i64 + dy);
+            if !next.in_bounds(bounds) {
+                return;
+            }
+            let next = (next.0 as usize, next.1 as usize);
+            if grid[next.0 + next.1 * width] == fill_value
+                || grid[next.0 + next.1 * width] == filled_value
+            {
+                return;
+            }
+            q.push_back(next);
+        });
+    }
+}
+
+pub fn fill3d<T: Clone + PartialEq>(
+    grid: &mut Vec<T>,
+    width: usize,
+    height: usize,
+    depth: usize,
+    start_x: usize,
+    start_y: usize,
+    start_z: usize,
+    fill_value: T,
+    filled_value: T,
+) {
+    let mut q = VecDeque::new() as VecDeque<(usize, usize, usize)>;
+    let bounds = (
+        (0i64, 0i64, 0i64),
+        (width as i64 - 1, height as i64 - 1, depth as i64 - 1),
+    );
+    q.push_back((start_x, start_y, start_z));
+    let directions: [Int3; 6] = [
+        (-1, 0, 0),
+        (1, 0, 0),
+        (0, -1, 0),
+        (0, 1, 0),
+        (0, 0, -1),
+        (0, 0, 1),
+    ];
+    while let Some((x, y, z)) = q.pop_back() {
+        grid[x + y * width + z * width * height] = fill_value.clone();
+        directions.iter().for_each(|&(dx, dy, dz)| {
+            let next = (x as i64 + dx, y as i64 + dy, z as i64 + dz);
+            if !next.in_bounds(bounds) {
+                return;
+            }
+            let next = (next.0 as usize, next.1 as usize, next.2 as usize);
+            if grid[next.0 + next.1 * width + next.2 * width * height] == fill_value
+                || grid[next.0 + next.1 * width + next.2 * width * height] == filled_value
+            {
+                return;
+            }
+            q.push_back(next);
+        });
+    }
+}
+
+pub fn hex_to_int(s: &String) -> i64 {
+    i64::from_str_radix(&s.replace("#", ""), 16).unwrap()
+}
+
+// area of polygon enclosed by lines, lines need to be enclosing an area and in the right order
+pub fn trapezoid_formula<'a, T>(lines: &mut T) -> i64
+where
+    T: Iterator<Item = &'a Int2>,
+{
+    let current = lines.next();
+    if current.is_none() {
+        return 0;
+    }
+    let mut current = *current.unwrap();
+    let mut sum = 0;
+    while let Some(&next) = lines.next() {
+        let area = current.determinant(next);
+        sum += area;
+        current = next;
+    }
+    return sum.abs() / 2;
 }
