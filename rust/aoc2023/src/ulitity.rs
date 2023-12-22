@@ -1,5 +1,5 @@
 use regex::Regex;
-use std::{collections::VecDeque, os::windows, process::Output, *};
+use std::{*, collections::*};
 pub type Int2 = (i64, i64);
 pub type Int3 = (i64, i64, i64);
 pub type AABB2 = (Int2, Int2);
